@@ -12,15 +12,19 @@ import numpy as np
 
 def initial_Conditions(r, v, m, fileName):
     
-    File = open(fileName,"r")
-    lines = File.readlines()
+	File = open(fileName,"r")
+	lines = File.readlines()
     
-    for i in np.arange(len(lines))[1:]:
-        info = lines[i].split()
-        m[i-1] = float(info[0])
-        r[i-1] = np.array([float(info[1]),float(info[2]),float(info[3])])
-        v[i-1] = np.array([float(info[4]),float(info[5]),float(info[6])])
+	for i in np.arange(len(lines))[1:]:
+		info = lines[i].split()
+		m[i-1]   = float(info[0])
+		r[3*i-3] = float(info[1])
+		r[3*i-2] = float(info[2])
+		r[3*i-1] = float(info[3]) 
+		v[3*i-3] = float(info[4])
+		v[3*i-2] = float(info[5])
+		v[3*i-1] = float(info[6])
 
-    File.close()
+	File.close()
     
-    return r, v, m
+	return r, v, m

@@ -17,17 +17,17 @@ from runError import runError
 from runLFError import runLFError
 
 # Parameters for simulation
-flag = "-p"								   				# decide what part of program to execute... -p = plot, -e = error			
+flag = "-"								   				# decide what part of program to execute... -p = plot, -e = error			
 dt = 0.05									   			# default time step (arbitrary)
 n = 1													# Lowers the time step for each call to A1 and A2. Also more calls
-numSteps = 400											# default number of time steps to take (arbitrary)
+numSteps = 10											# default number of time steps to take (arbitrary)
 fileName = "particleInfo1.txt"			 	 			# file to read initial conditions from
 File = open(fileName, "r")
 lines = File.readlines()
 numParticles = len(lines) - 1 			       			# number of particles in simulation
 File.close()
-r = np.zeros((numParticles,3))				  			# array to hold positions of particles
-v = np.zeros((numParticles,3))  						# array to hold velocities of particles
+r = np.zeros(3 * numParticles)				  			# array to hold positions of particles
+v = np.zeros(3 * numParticles)  						# array to hold velocities of particles
 m = np.zeros(numParticles)	        					# array to hold masses of particles
 dirvec = np.zeros(3)						  			# array to find direction vector along particle j to particle i
 timeStep_iter = np.logspace(-4,0,100)                   # loop over time steps
@@ -87,3 +87,11 @@ elif flag == "-LFc":
 	plt.ylabel('Relative Error')
 
 	plt.show()
+
+drift = ctypes.CDLL('./A1.so')
+
+for i in np.arange(numSteps):
+	drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+			 ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
+
+print(r)

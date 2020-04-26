@@ -7,11 +7,11 @@
 #define A1
 
 /// @brief  Updates positions of particles via the A1 operator
-/// @param      r         A 2D array: 1st dimension is the number of particles, 2nd is their positions in 3D space.
-/// @param      v         A 2D array: 1st dimension is the number of particles, 2nd is their velocities in 3D space.
+/// @param      r         A 1D array: Lists the x,y,z position of particle 1, then 2, ...
+/// @param      v         A 1D array: Lists the vx,vy,vz data of particle 1, then 2, ... 
 /// @param      dt        The time step over which you wish to update the positions.
-/// @param  numParticles  The number of particles ie. the size of the first index of r and v.
+/// @param  numParticles  The number of particles ie. the size of the r vector divided by 3.
 
-void A1(double& r[][3], double v[][3], double dt, int numParticles);
+void A1(double* r_h, double* v_h, double dt_h, int numParticles);
 
 #endif
