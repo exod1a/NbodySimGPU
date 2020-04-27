@@ -14,7 +14,7 @@ A1.so: A1.c A1.h
 	${CXX} ${FLAGS} ${CL_FLAGS} -Wl,-install_name,A1.so -o A1.so -fPIC A1.c
 
 A2.so: A2.c A2.h
-	${CXX} ${FLAGS} -Wl,-install_name,A2.so -o A2.so -fPIC A2.c
+	${CXX} ${FLAGS} ${CL_FLAGS} -Wl,-install_name,A2.so -o A2.so -fPIC A2.c
 
 B.so: B.c B.h
 	${CXX} ${FLAGS} -Wl,-install_name,B.so -o B.so -fPIC B.c
