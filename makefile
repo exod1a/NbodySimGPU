@@ -17,7 +17,7 @@ A2.so: A2.c A2.h
 	${CXX} ${FLAGS} ${CL_FLAGS} -Wl,-install_name,A2.so -o A2.so -fPIC A2.c
 
 B.so: B.c B.h
-	${CXX} ${FLAGS} -Wl,-install_name,B.so -o B.so -fPIC B.c
+	${CXX} ${FLAGS} ${CL_FLAGS} -Wl,-install_name,B.so -o B.so -fPIC B.c
 
 energy.so: energy.c energy.h
 	${CXX} ${FLAGS} -Wl,-install_name,energy.so -o energy.so -fPIC energy.c
