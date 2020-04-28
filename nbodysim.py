@@ -17,10 +17,10 @@ from runError import runError
 from runLFError import runLFError
 
 # Parameters for simulation
-flag = "-"								   				# decide what part of program to execute... -p = plot, -e = error			
+flag = "-p"								   				# decide what part of program to execute... -p = plot, -e = error			
 dt = 0.05									   			# default time step (arbitrary)
 n = 1													# Lowers the time step for each call to A1 and A2. Also more calls
-numSteps = 10											# default number of time steps to take (arbitrary)
+numSteps = 400											# default number of time steps to take (arbitrary)
 fileName = "particleInfo1.txt"			 	 			# file to read initial conditions from
 File = open(fileName, "r")
 lines = File.readlines()
@@ -88,10 +88,50 @@ elif flag == "-LFc":
 
 	plt.show()
 
-drift = ctypes.CDLL('./A1.so')
+"""drift = ctypes.CDLL('./A1.so')
+kickA = ctypes.CDLL('./A2.so')
+kickB = ctypes.CDLL('./B.so')
 
 for i in np.arange(numSteps):
-	drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-			 ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
+	for k in np.arange(n):
+		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+				ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
 
-print(r)
+		print("r\n")
+		print(r)
+
+		kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+				 m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt/(n*2.)), ctypes.c_uint(numParticles))
+
+		print("v\n")
+		print(v)
+
+		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+				 ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
+
+		print("r\n")
+		print(r)
+	
+	kickB.B(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+		 	m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt), ctypes.c_uint(numParticles))
+
+	print("v\n")
+	print(v)
+
+	for k in np.arange(n):
+		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+				 ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
+
+		print("r\n")
+		print(r)
+		kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+				 m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt/(n*2.)), ctypes.c_uint(numParticles))
+
+		print("v\n")
+		print(v)
+		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+			     ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
+		
+		print("r\n")
+		print(r)
+"""

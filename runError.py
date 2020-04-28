@@ -18,7 +18,6 @@ from init_cond import initial_Conditions
 
 # parameters
 time = 1														# total time to run for each of the time steps
-dirvec = np.zeros(3)											# array to find direction vector along particle j to particle i
 timeStep_iter = np.logspace(-5,0,100)							# loop over time steps
 numSteps = np.array([time/i for i in timeStep_iter])			# number of steps to reach the total time
 rel_err = np.zeros(len(timeStep_iter))							# largest relative error
@@ -57,8 +56,7 @@ def runError(r, v, m, numParticles, n):
                     	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))
 
 				kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    	 m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]/(n*2.)), ctypes.c_uint(numParticles),  \
-                    	 dirvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+                    	 m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]/(n*2.)), ctypes.c_uint(numParticles))
 
 				drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))
@@ -66,16 +64,14 @@ def runError(r, v, m, numParticles, n):
 			# dirvec will now hold the direction vector along particle j to particle i
 
 			kickB.B(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-               	    m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]), ctypes.c_uint(numParticles),  \
-               	    dirvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+               	    m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]), ctypes.c_uint(numParticles))
 
 			for k in np.arange(n):
 				drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                      	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))
 
 				kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                  	     m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]/(n*2.)), ctypes.c_uint(numParticles),  \
-                    	 dirvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+                  	     m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]/(n*2.)), ctypes.c_uint(numParticles))
 
 				drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                     	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))

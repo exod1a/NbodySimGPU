@@ -7,12 +7,11 @@
 #define B
 
 /// @brief Computes the A2 operator part of the Hamiltonian
-/// @param      r         A 2D array: 1st dimension is the number of particles, 2nd is their positions in 3D space.
-/// @param      v         A 2D array: 1st dimension is the number of particles, 2nd is their velocities in 3D space.
+/// @param      r         A 1D array: Lists the x,y,z position of particle 0, then 1, ...
+/// @param      v         A 1D array: Lists the vx,vy,vz position of particle 0, then 1, ...
 /// @param      m         A 1D array: contains the masses for particle 0, 1, ..., N-1.
 /// @param      dt        The time step over which you wish to update the positions.
-/// @param  numParticles  The number of particles ie. the size of the first index of r and v.
-/// @param    dirvec      1D array: to store the output of dirVec function.
-void B(double r[][3], double v[][3], double m[], double dt, int numParticles, double dirvec[]);
+/// @param  numParticles  The number of particles ie. the size of r divided by 3..
+void B(double* r, double* v, double* m, double dt, int numParticles);
 
 #endif

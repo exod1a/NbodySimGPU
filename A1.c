@@ -29,7 +29,7 @@ const char *kernelSource =
 void A1(double* r_h, double* v_h, double dt_h, int numParticles)
 {
 	size_t N = 3 * numParticles;
-	size_t N_bytes = N * sizeof(double);
+	size_t N_bytes = N * sizeof(float);
 
 	float* r_hnew = (float*)malloc(N_bytes);
 	float* v_hnew = (float*)malloc(N_bytes);
@@ -119,6 +119,8 @@ void A1(double* r_h, double* v_h, double dt_h, int numParticles)
 
     clEnqueueReadBuffer(queue, r_d, CL_TRUE, 0, N_bytes, r_hnew, 0, NULL, NULL );
 
+	// give info to r_h so it updates the actual r in the python code
+	// for some reason, it doesn't work if I add the r_d data to r_h from the start
     for (i=0; i<N; i++)
         r_h[i] = r_hnew[i];
 
@@ -129,4 +131,7 @@ void A1(double* r_h, double* v_h, double dt_h, int numParticles)
     clReleaseKernel(k_mult);
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
+
+	free(r_hnew);
+	free(v_hnew);
 }
