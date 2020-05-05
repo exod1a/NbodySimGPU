@@ -18,11 +18,9 @@
 
 // Load the kernel source code into the array source_str
 const char *kernelSource =
-"__kernel void A2_kernel(__global float* r, __global float* v, __global float* partialSums,__local float* localSums, __global float* m, float dt)\n"\
+"__kernel void A2_kernel(__global float* r, __global float* v, __global float* m, float dt)\n"\
 "{\n"\
 "   size_t idx = get_global_id(0);\n"\
-"	size_t local_id = get_local_id(0);\n"\
-" 	size_t group_size = get_local_size(0);\n"\
 "	float dirvec[3];\n"\
 "	dirvec[0] = r[0] - r[3*(idx+1)];\n"\
 "	dirvec[1] = r[1] - r[3*(idx+1) + 1];\n"\
@@ -32,10 +30,9 @@ const char *kernelSource =
 "   v[3*(idx+1)]   += (m[0] / dist) * dirvec[0] * dt;\n"\
 "   v[3*(idx+1)+1] += (m[0] / dist) * dirvec[1] * dt;\n"\
 "	v[3*(idx+1)+2] += (m[0] / dist) * dirvec[2] * dt;\n"\
-"   vtemp[3*idx]   -= (m[idx+1] / dist) * dirvec[0] * dt;\n"\
-"   vtemp[3*idx+1] -= (m[idx+1] / dist) * dirvec[1] * dt;\n"\
-"	vtemp[3*idx+2] -= (m[idx+1] / dist) * dirvec[2] * dt;\n"\
-"   localSums[local_id] = \n"\
+"   v[0]           -= (m[idx+1] / dist) * dirvec[0] * dt;\n"\
+"   v[1]           -= (m[idx+1] / dist) * dirvec[1] * dt;\n"\
+"	v[2] 		   -= (m[idx+1] / dist) * dirvec[2] * dt;\n"\
 "}\n";
 
 // for some reason, ctypes doesn't let me send arguments as floats
@@ -44,18 +41,10 @@ void A2(double* r_h, double* v_h, double* m_h, double dt_h, int numParticles)
     size_t N = 3 * numParticles;
     size_t N_bytes = N * sizeof(float);
 
-	// global & local number of threads
-    size_t globalSize, localSize;
-    globalSize = numParticles - 2;
-    localSize = 2; //fix for odd number
-    int numWrkGps = globalSize / localSize;
-
-    float* r_hnew  = (float*)malloc(N_bytes);
-    float* v_hnew  = (float*)malloc(N_bytes);
-	float* m_hnew  = (float*)malloc(numParticles * sizeof(float));
-    float dt_hnew  = (float) dt_h;
-	float* partialSums = (float*)malloc(3*numWrkGps*sizeof(float));
-	float* localSums = (float*)malloc(3*localSize*sizeof(float));
+    float* r_hnew = (float*)malloc(N_bytes);
+    float* v_hnew = (float*)malloc(N_bytes);
+	float* m_hnew = (float*)malloc(numParticles * sizeof(float));
+    float dt_hnew = (float) dt_h;
 
     // convert to floats so it can be used on GPU
     int i;
@@ -100,6 +89,11 @@ void A2(double* r_h, double* v_h, double* m_h, double dt_h, int numParticles)
     properties[1]= (cl_context_properties) platform_id;
     properties[2]= 0;
 
+    // global & local number of threads
+    size_t globalSize, localSize;
+    globalSize = numParticles - 1;
+    localSize = 1;
+
     // setup OpenCL stuff
     cl_int err;
     err = clGetPlatformIDs(1, &platform, NULL);
@@ -124,43 +118,34 @@ void A2(double* r_h, double* v_h, double* m_h, double dt_h, int numParticles)
     k_mult = clCreateKernel(program, "A2_kernel", &err);
 
     // create arrays on host and write them
-    cl_mem r_d, v_d, partialSums_d, localSums_d, m_d;
+    cl_mem r_d, v_d, m_d;
     r_d = clCreateBuffer(context, CL_MEM_READ_ONLY, N_bytes, NULL, NULL);
     v_d = clCreateBuffer(context, CL_MEM_READ_WRITE, N_bytes, NULL, NULL);
-    partialSums_d = clCreateBuffer(context, CL_MEM_READ_WRITE, 3*numWrkGps*sizeof(float), NULL, NULL);
-	localSums_d = clCreateBuffer(context, CL_MEM_READ_ONLY, 3*localSize*sizeof(float), NULL, NULL);
-	m_d = clCreateBuffer(context, CL_MEM_READ_ONLY, numParticles * sizeof(float), NULL, NULL);
+    m_d = clCreateBuffer(context, CL_MEM_READ_ONLY, numParticles * sizeof(float), NULL, NULL);
 	err = clEnqueueWriteBuffer(queue, r_d, CL_TRUE, 0, N_bytes, r_hnew, 0, NULL, NULL);
     err = clEnqueueWriteBuffer(queue, v_d, CL_TRUE, 0, N_bytes, v_hnew, 0, NULL, NULL);
-	err = clEnqueueWriteBuffer(queue, partialSums_d, CL_TRUE, 0, 3*numWrkGps*sizeof(float), partialSums, 0, NULL, NULL);
-	err = clEnqueueWriteBuffer(queue, localSums_d, CL_TRUE, 0, 3*localSize*sizeof(float), localSums, 0, NULL, NULL);
 	err = clEnqueueWriteBuffer(queue, m_d, CL_TRUE, 0, numParticles * sizeof(float), m_hnew, 0, NULL, NULL);
 
     // set kernel arguments
     err = clSetKernelArg(k_mult, 0, sizeof(r_d), &r_d);
     err = clSetKernelArg(k_mult, 1, sizeof(v_d), &v_d);
-	err = clSetKernelArg(k_mult, 2, sizeof(partialSums_d), &partialSums);
-	err = clSetKernelArg(k_mult, 2, sizeof(localSums_d), &localSums);
-	err = clSetKernelArg(k_mult, 3, sizeof(m_d), &m_d);
-	err = clSetKernelArg(k_mult, 4, sizeof(float), &dt_hnew);
+	err = clSetKernelArg(k_mult, 2, sizeof(m_d), &m_d);
+    err = clSetKernelArg(k_mult, 3, sizeof(float), &dt_hnew);
 
     err = clEnqueueNDRangeKernel(queue, k_mult, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
     clFinish(queue);
 
     clEnqueueReadBuffer(queue, v_d, CL_TRUE, 0, N_bytes, v_hnew, 0, NULL, NULL );
-	clEnqueueReadBuffer(queue, partialSums_d, CL_TRUE, 0, 3*numWrkGps*sizeof(float), partialSums, 0, NULL, NULL );
 
-	//for (i = 0; i < numWrkGps; i++)
-	//{
+    // give info to v_h so it updates the actual v in the python code
+    // for some reason, it doesn't work if I add the v_d data to v_h from the start
+    for (i=0; i<N; i++)
+        v_h[i] = v_hnew[i];
 
-	//}
-	
     // release OpenCL resources
     clReleaseMemObject(r_d);
     clReleaseMemObject(v_d);
-    clReleaseMemObject(partialSums_d);
-	clReleaseMemObject(localSums_d);
-	clReleaseMemObject(m_d);
+    clReleaseMemObject(m_d);
 	clReleaseProgram(program);
     clReleaseKernel(k_mult);
     clReleaseCommandQueue(queue);
@@ -168,8 +153,6 @@ void A2(double* r_h, double* v_h, double* m_h, double dt_h, int numParticles)
 
     free(r_hnew);
     free(v_hnew);
-	free(partialSums);
-	free(localSums);
 	free(m_hnew);
 }
 

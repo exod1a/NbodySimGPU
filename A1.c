@@ -18,10 +18,10 @@
 
 // Load the kernel source code into the array source_str
 const char *kernelSource =
-"__kernel void A1_kernel(__global float *r, __global float *v, float dt)\n"\
+"__kernel void A1_kernel(__global float* r, __global float* v, float dt)\n"\
 "{\n"\
-"   size_t id = get_global_id(0);\n"\
-"   r[id] += v[id] * dt;\n"\
+"   size_t idx = get_global_id(0);\n"\
+"   r[idx] += v[idx] * dt;\n"\
 "}\n";
 
 
@@ -110,9 +110,9 @@ void A1(double* r_h, double* v_h, double dt_h, int numParticles)
 	err = clEnqueueWriteBuffer(queue, v_d, CL_TRUE, 0, N_bytes, v_hnew, 0, NULL, NULL);
 
     // set kernel arguments
-    err = clSetKernelArg(k_mult, 0, sizeof(cl_mem), &r_d);
-    err = clSetKernelArg(k_mult, 1, sizeof(cl_mem), &v_d);
-	err = clSetKernelArg(k_mult, 2, sizeof(float), &dt_hnew);
+    err = clSetKernelArg(k_mult, 0, sizeof(r_d), &r_d);
+    err = clSetKernelArg(k_mult, 1, sizeof(v_d), &v_d);
+	err = clSetKernelArg(k_mult, 2, sizeof(dt_hnew), &dt_hnew);
  
     err = clEnqueueNDRangeKernel(queue, k_mult, 1, NULL, &globalSize, &localSize, 0, NULL, NULL);
     clFinish(queue);
