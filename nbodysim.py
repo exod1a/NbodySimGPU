@@ -12,9 +12,9 @@ import math as M
 import timeit
 
 from init_cond import initial_Conditions
-#from runPlot import runPlot
+from runPlot import runPlot
 #from runLFPlot import runLFPlot
-#from runError import runError
+from runError import runError
 #from runLFError import runLFError
 
 # Parameters for simulation
@@ -43,7 +43,7 @@ r, v, m = initial_Conditions(r, v, m, fileName)
 if flag == "-p":
 	r, v, m = initial_Conditions(r, v, m, fileName)
 	# make plot output
-	#runPlot(r, v ,m, numSteps, numParticles, dt, n)
+	runPlot(r, v ,m, numSteps, numParticles, dt, n)
 
 elif flag=="-pLF":
     r, v, m = initial_Conditions(r, v, m, fileName)
@@ -51,7 +51,7 @@ elif flag=="-pLF":
 
 elif flag == "-e":
 	# make error and run time plot
-	#runTime, rel_err = runError(r, v, m, numParticles, n)
+	runTime, rel_err = runError(r, v, m, numParticles, n)
 	
 	plt.figure(2)
 	plt.loglog(timeStep_iter,rel_err, label='HR')
@@ -97,57 +97,3 @@ sim   = ctypes.CDLL('./runSim.so')
 sim.runSim(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
            m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt), ctypes.c_uint(numParticles),  \
 		   ctypes.c_uint(n), ctypes.c_uint(numSteps))
-
-#print(numParticles)
-
-#print("After {} time step(s):".format(numSteps))
-#print("r")
-#print(r)
-#print("v")
-#print(v)
-
-"""for i in np.arange(numSteps):
-	for k in np.arange(n):
-		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-				ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
-
-		print("After A1")
-		print("r\n")
-		print(r)
-
-		kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-				 m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt/(n*2.)), ctypes.c_uint(numParticles))
-
-		print("After A2")
-		print("v\n")
-		print(v)
-
-		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-				 ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
-
-		print("r\n")
-		print(r)
-	
-	kickB.B(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-		 	m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt), ctypes.c_uint(numParticles))
-
-	print("v\n")
-	print(v)
-
-	for k in np.arange(n):
-		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-				 ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
-
-		print("r\n")
-		print(r)
-		kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-				 m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt/(n*2.)), ctypes.c_uint(numParticles))
-
-		print("v\n")
-		print(v)
-		drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-			     ctypes.c_double(dt/(n*4.)), ctypes.c_uint(numParticles))
-		
-		print("r\n")
-		print(r)"""
-

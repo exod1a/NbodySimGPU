@@ -15,6 +15,7 @@ kickB = ctypes.CDLL('./B.so')
 nrg   = ctypes.CDLL('./energy.so')
 nrg.energy.restype = ctypes.c_double  							# so that it returns a double
 from init_cond import initial_Conditions
+sim   = ctypes.CDLL('./runSim.so')
 
 # parameters
 time = 1														# total time to run for each of the time steps
@@ -50,31 +51,9 @@ def runError(r, v, m, numParticles, n):
 
 		for j in np.arange(int(M.ceil(numSteps[i]))):
         
-			# one full time step
-			for k in np.arange(n):
-				drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))
-
-				kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    	 m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]/(n*2.)), ctypes.c_uint(numParticles))
-
-				drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))
-
-			# dirvec will now hold the direction vector along particle j to particle i
-
-			kickB.B(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-               	    m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]), ctypes.c_uint(numParticles))
-
-			for k in np.arange(n):
-				drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                     	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))
-
-				kickA.A2(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                  	     m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]/(n*2.)), ctypes.c_uint(numParticles))
-
-				drift.A1(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-                    	 ctypes.c_double(timeStep_iter[i]/(n*4.)), ctypes.c_uint(numParticles))
+			sim.runSim(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
+           			   m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(timeStep_iter[i]), ctypes.c_uint(numParticles),  \
+             		   ctypes.c_uint(n), 1)			
 
 			E = nrg.energy(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
                            m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_uint(numParticles))
