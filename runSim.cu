@@ -55,72 +55,78 @@ __global__ void A2_kernel(double *r, double *v, double *m, double dt, double *v0
 {
 	size_t id = blockIdx.x * blockDim.x + threadIdx.x;
 
-	// Direction vector between particle 0 and i
-    double dirvec[3];
-    dirvec[0] = r[0] - r[3*(id+1)];
-    dirvec[1] = r[1] - r[3*(id+1)+1];
-    dirvec[2] = r[2] - r[3*(id+1)+2];
+	if (id < numParticles - 1)
+	{
+		// Direction vector between particle 0 and i
+		double dirvec[3];
+		dirvec[0] = r[0] - r[3*(id+1)];
+		dirvec[1] = r[1] - r[3*(id+1)+1];
+		dirvec[2] = r[2] - r[3*(id+1)+2];
 
-	// Distance between particle 0 and i
-    double invdist = dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
-                       		 	(dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
-                       		 	(dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
+		// Distance between particle 0 and i
+		double invdist = dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+        	              		 	(dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+            	        		 	(dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
 
-	// Update velocities of particles 1 through N-1
-    v[3*(id+1)]   += m[0] * invdist * dirvec[0];
-    v[3*(id+1)+1] += m[0] * invdist * dirvec[1];
-    v[3*(id+1)+2] += m[0] * invdist * dirvec[2];
+		// Update velocities of particles 1 through N-1
+		v[3*(id+1)]   += m[0] * invdist * dirvec[0];
+		v[3*(id+1)+1] += m[0] * invdist * dirvec[1];
+		v[3*(id+1)+2] += m[0] * invdist * dirvec[2];
 
-	// Store forces on particle 0 for reduction
-    v0arr[0]              = v[0];
-    v0arr[numParticles]   = v[1];
-    v0arr[2*numParticles] = v[2];
+		// Store forces on particle 0 for reduction
+		v0arr[0]              = v[0];
+		v0arr[numParticles]   = v[1];
+		v0arr[2*numParticles] = v[2];
 
-    v0arr[id+1]                = -m[id+1] * invdist * dirvec[0];
-    v0arr[numParticles+1+id]   = -m[id+1] * invdist * dirvec[1];
-    v0arr[2*numParticles+1+id] = -m[id+1] * invdist * dirvec[2];
+		v0arr[id+1]                = -m[id+1] * invdist * dirvec[0];
+		v0arr[numParticles+1+id]   = -m[id+1] * invdist * dirvec[1];
+		v0arr[2*numParticles+1+id] = -m[id+1] * invdist * dirvec[2];
+	}
 }
 
 // Executes the B operator
 __global__ void B_kernel(double *r, double *v, double *m, double dt, int numParticles)
 {
-	size_t id = blockIdx.x;
+	size_t id = blockIdx.x * blockDim.x + threadIdx.x;
 	double dirvec[3];
     double invdist;
 
-    // forward loop: goes from current particle to particle N-1
-    for (int i = 1; i+id+1 < numParticles; i++)
-    {
-     	// x, y and z components of vector that points from particle j to particle k
-        dirvec[0] = r[3*(id+1)]   - r[3*(i+id+1)];
-        dirvec[1] = r[3*(id+1)+1] - r[3*(i+id+1)+1];
-        dirvec[2] = r[3*(id+1)+2] - r[3*(i+id+1)+2];
+	if (id < numParticles - 1)
+	{
+    	// forward loop: goes from current particle to particle N-1
+    	for (int i = 1; i+id+1 < numParticles; i++)
+    	{
+     		// x, y and z components of vector that points from particle j to particle k
+        	dirvec[0] = r[3*(id+1)]   - r[3*(i+id+1)];
+        	dirvec[1] = r[3*(id+1)+1] - r[3*(i+id+1)+1];
+        	dirvec[2] = r[3*(id+1)+2] - r[3*(i+id+1)+2];
 
-        // distance between particle j and k
-        invdist = m[i+id+1] * dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
-                    		 			 (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
-                    		 			 (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
+        	// distance between particle j and k
+        	invdist = m[i+id+1] * dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+            	        		 			 (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+                	    		 			 (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
 
-        // update one particle per thread
-        v[3*(id+1)]   -= invdist * dirvec[0];
-        v[3*(id+1)+1] -= invdist * dirvec[1];
-        v[3*(id+1)+2] -= invdist * dirvec[2];
-    }
-    // backwards loop: goes from current particle to particle 1
-    for (int i = id; i > 0; i--)
-    {
-     	dirvec[0] = r[3*(id+1)]   - r[3*i];
-        dirvec[1] = r[3*(id+1)+1] - r[3*i+1];
-        dirvec[2] = r[3*(id+1)+2] - r[3*i+2];
+        	// update one particle per thread
+        	v[3*(id+1)]   -= invdist * dirvec[0];
+        	v[3*(id+1)+1] -= invdist * dirvec[1];
+        	v[3*(id+1)+2] -= invdist * dirvec[2];
+    	}
+    	// backwards loop: goes from current particle to particle 1
+    	for (int i = id; i > 0; i--)
+    	{
+     		dirvec[0] = r[3*(id+1)]   - r[3*i];
+        	dirvec[1] = r[3*(id+1)+1] - r[3*i+1];
+        	dirvec[2] = r[3*(id+1)+2] - r[3*i+2];
 
-        invdist = m[i] * dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
-                    	 		    (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
-                   			   	    (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
+        	invdist = m[i] * dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+            	        	 		    (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+                	   			   	    (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
 
-        v[3*(id+1)]   -= invdist * dirvec[0];
-        v[3*(id+1)+1] -= invdist * dirvec[1];
-        v[3*(id+1)+2] -= invdist * dirvec[2];
-    }
+        	v[3*(id+1)]   -= invdist * dirvec[0];
+        	v[3*(id+1)+1] -= invdist * dirvec[1];
+        	v[3*(id+1)+2] -= invdist * dirvec[2];
+    	}
+	}
 }
 
 // Perform the simulation
@@ -185,17 +191,17 @@ void runSim(double *r_h, double *v_h, double *m_h, double dt, int numParticles, 
     	// One time step
     	for (j = 0; j < n; j++) {
         	A1_kernel<<<N/warpSize, warpSize>>>(r_d, v_d, dt/(4*n));
-        	A2_kernel<<<numParticles-1, 1>>>(r_d, v_d, m_d, dt/(2*n), v0arr_d, numParticles);
+        	A2_kernel<<<numParticles/warpSize, warpSize>>>(r_d, v_d, m_d, dt/(2*n), v0arr_d, numParticles);
         	for (k = 0; k < 3; k++) {
         		reduce<warpSize><<<numParticles/(2*warpSize), warpSize, 2*warpSize*sizeof(double)>>>(v0arr_d+k*numParticles, vout_d, numParticles);
 				reduce<blockDim><<<1, blockDim, 2*blockDim*sizeof(double)>>>(vout_d, &v_d[k], 2*blockDim);
 			}
 			A1_kernel<<<N/warpSize, warpSize>>>(r_d, v_d, dt/(4*n));
     	}
-    	B_kernel<<<numParticles-1, 1>>>(r_d, v_d, m_d, dt, numParticles);
+    	B_kernel<<<numParticles/warpSize, warpSize>>>(r_d, v_d, m_d, dt, numParticles);
     	for (j = 0; j < n; j++) {
         	A1_kernel<<<N/warpSize, warpSize>>>(r_d, v_d, dt/(4*n));
-        	A2_kernel<<<numParticles-1, 1>>>(r_d, v_d, m_d, dt/(2*n), v0arr_d, numParticles);
+        	A2_kernel<<<numParticles/warpSize, warpSize>>>(r_d, v_d, m_d, dt/(2*n), v0arr_d, numParticles);
         	for (k = 0; k < 3; k++) {
             	reduce<warpSize><<<numParticles/(2*warpSize), warpSize, 2*warpSize*sizeof(double)>>>(v0arr_d+k*numParticles, vout_d, numParticles);
             	reduce<blockDim><<<1, blockDim, 2*blockDim*sizeof(double)>>>(vout_d, &v_d[k], 2*blockDim);
@@ -214,11 +220,23 @@ void runSim(double *r_h, double *v_h, double *m_h, double dt, int numParticles, 
 	{
 		printf("%.16lf %.16lf %.16lf\n", r_h[i], r_h[i+1], r_h[i+2]);
 	}
+    printf("...\n");
+    for (i = 3*numParticles - 9; i < 3*numParticles; i += 3)
+    {
+     	printf("%.16lf %.16lf %.16lf\n", r_h[i], r_h[i+1], r_h[i+2]);
+    }
+	printf("\n");
 	printf("v\n");
 	for (i = 0; i < 9; i += 3)
 	{
 		printf("%.16lf %.16lf %.16lf\n", v_h[i], v_h[i+1], v_h[i+2]);
 	}
+	printf("...\n");
+
+    for (i = 3*numParticles - 9; i < 3*numParticles; i += 3)
+    {
+     	printf("%.16lf %.16lf %.16lf\n", v_h[i], v_h[i+1], v_h[i+2]);
+    }
 
 	printf("%d\n", numParticles);*/
 
