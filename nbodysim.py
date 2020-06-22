@@ -18,11 +18,16 @@ from runError import runError
 #from runLFError import runLFError
 
 # Parameters for simulation
+# Redefine units such that mass of Jupiter (M) = 1 and G = 1
+G     = 6.673e-11                   # gravitational constant
+M0    = 1.898e27                    # set mass scale
+R0    = 8.25e9                      # set length scale
+T0    = np.sqrt(R0**3/(G * M0))     # set time scale
 flag = "-"								   				# decide what part of program to execute... -p = plot, -e = error			
-dt = 0.05									   			# default time step (arbitrary)
+dt = 86400/T0									   			# default time step (arbitrary)
 n = 1													# Lowers the time step for each call to A1 and A2. Also more calls
-numSteps = 500											# default number of time steps to take (arbitrary)
-fileName = "particleinfo1.txt"			 	 			# file to read initial conditions from
+numSteps = 1000     										# default number of time steps to take (arbitrary)
+fileName = "particles.txt"  			 	 			# file to read initial conditions from
 File = open(fileName, "r")
 lines = File.readlines()
 numParticles = len(lines) - 1 			       			# number of particles in simulation

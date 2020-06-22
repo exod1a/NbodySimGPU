@@ -5,25 +5,28 @@
 
 # compiler and flags
 CXX = gcc
-FLAGS = -Wall -std=c99 -O3 -shared
-CL_FLAGS = -framework OpenCL
+CXXCUDA = nvcc
+FLAGS = -O3 -Xcompiler -fPIC -shared
 
-all: A1.so A2.so B.so energy.so LF_U.so
+all: runSim.so A1.so A2.so B.so energy.so LF_U.so
 
-A1.so: A1.c A1.h 
-	${CXX} ${FLAGS} ${CL_FLAGS} -Wl,-install_name,A1.so -o A1.so -fPIC A1.c
+runSim.so: runSim.cu
+	${CXXCUDA} ${FLAGS} -o runSim.so runSim.cu
 
-A2.so: A2.c A2.h
-	${CXX} ${FLAGS} ${CL_FLAGS} -Wl,-install_name,A2.so -o A2.so -fPIC A2.c
+A1.so: A1.cu A1.h 
+	${CXXCUDA} ${FLAGS} -o A1.so A1.cu
 
-B.so: B.c B.h
-	${CXX} ${FLAGS} ${CL_FLAGS} -Wl,-install_name,B.so -o B.so -fPIC B.c
+A2.so: A2.cu A2.h
+	${CXXCUDA} ${FLAGS} -o A2.so A2.cu
+
+B.so: B.cu B.h
+	${CXXCUDA} ${FLAGS} -o B.so B.cu
 
 energy.so: energy.c energy.h
-	${CXX} ${FLAGS} -Wl,-install_name,energy.so -o energy.so -fPIC energy.c
+	${CXX} -O3 -fPIC -shared -o energy.so energy.c
 
 LF_U.so: LF_U.c LF_U.h
-	${CXX} ${FLAGS} -Wl,-install_name,LF_U.so -o LF_U.so -fPIC LF_U.c
+	${CXX} -O3 -fPIC -shared -o LF_U.so -fPIC LF_U.c
 
 # delete .so and .pyc files
 clean:

@@ -12,6 +12,10 @@
 /// @param      m         A 1D array: contains the masses for particle 0, 1, ..., N-1.
 /// @param      dt        The time step over which you wish to update the positions.
 /// @param  numParticles  The number of particles ie. the size of r divided by 3..
-void A2(double* r_h, double* v_h, double* m_h, double dt_h, int numParticles);
+template <unsigned int blockSize>
+__device__ void warpReduce(volatile double* sdata, int tid);
+template <unsigned int blockSize>
+__global__ void reduce(double *g_idata, double *g_odata);
+__global__ void A2_kernel(double *r, double *v, double *m, double dt, double *v0arr, int numParticles);
 
 #endif

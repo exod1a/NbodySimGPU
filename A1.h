@@ -10,8 +10,6 @@
 /// @param      r         A 1D array: Lists the x,y,z position of particle 0, then 1, ...
 /// @param      v         A 1D array: Lists the vx,vy,vz data of particle 0, then 1, ... 
 /// @param      dt        The time step over which you wish to update the positions.
-/// @param  numParticles  The number of particles ie. the size of the r vector divided by 3.
 
-void A1(double* r_h, double* v_h, double dt_h, int numParticles);
-
+__global__ void A1_kernel(double* r, double* v, double dt);
 #endif

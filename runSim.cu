@@ -54,6 +54,7 @@ __global__ void reduce(double *g_idata, double *g_odata, unsigned int n)
 __global__ void A2_kernel(double *r, double *v, double *m, double dt, double *v0arr, int numParticles)
 {
 	size_t id = blockIdx.x * blockDim.x + threadIdx.x;
+	//size_t s = 16;
 
 	if (id < numParticles - 1)
 	{
@@ -85,12 +86,16 @@ __global__ void A2_kernel(double *r, double *v, double *m, double dt, double *v0
 }
 
 // Executes the B operator
-__global__ void B_kernel(double *r, double *v, double *m, double dt, int numParticles)
+/*__global__ void B_kernel(double *r, double *v, double *m, double dt, int numParticles)
 {
 	size_t id = blockIdx.x * blockDim.x + threadIdx.x;
 	double dirvec[3];
     double invdist;
 
+	// I don't think one loop in this function can be achieved without 
+	// using double iterators which I'm not sure is faster or without
+	// using logic which will undoubtedly slow it down so I will leave
+	// it as is. 
 	if (id < numParticles - 1)
 	{
     	// forward loop: goes from current particle to particle N-1
@@ -127,6 +132,48 @@ __global__ void B_kernel(double *r, double *v, double *m, double dt, int numPart
         	v[3*(id+1)+2] -= invdist * dirvec[2];
     	}
 	}
+}*/
+
+// Execute the B operator 
+__global__ void B_kernel(double *r, double *v, double *m, double dt, int numParticles)
+{
+    size_t id = blockIdx.x * blockDim.x + threadIdx.x;
+    double dirvec[3];
+    double invdist;
+
+    // I don't think one loop in this function can be achieved without
+    // using double iterators which I'm not sure is faster or without
+    // using logic which will undoubtedly slow it down so I will leave
+    // it as is.
+    if (id < numParticles - 1)
+    {
+        dirvec[0] = r[3*(id+2)]   - r[3];
+        dirvec[1] = r[3*(id+2)+1] - r[3 + 1];
+        dirvec[2] = r[3*(id+2)+2] - r[3 + 2];
+
+        invdist = m[1] * dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+                                    (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+                                    (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
+
+        v[3*(id+2)]   -= invdist * dirvec[0];
+        v[3*(id+2)+1] -= invdist * dirvec[1];
+        v[3*(id+2)+2] -= invdist * dirvec[2];
+	
+	    // x, y and z components of vector that points from particle j to particle k
+        dirvec[0] = r[3]     - r[3*(id+2)];
+        dirvec[1] = r[3 + 1] - r[3*(id+2)+1];
+        dirvec[2] = r[3 + 2] - r[3*(id+2)+2];
+
+        // distance between particle j and k
+        invdist = m[id+2] * dt * rsqrt((dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+                                       (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2])*\
+                                       (dirvec[0]*dirvec[0] + dirvec[1]*dirvec[1] + dirvec[2]*dirvec[2]));
+
+        // update one particle per thread
+        v[3]     -= invdist * dirvec[0];
+        v[3 + 1] -= invdist * dirvec[1];
+        v[3 + 2] -= invdist * dirvec[2];
+	}
 }
 
 // Perform the simulation
@@ -138,7 +185,8 @@ void runSim(double *r_h, double *v_h, double *m_h, double dt, int numParticles, 
 	const unsigned int warpSize = 32;
 	size_t N = 3 * numParticles;
     size_t N_bytes = N * sizeof(double);
-	const unsigned int blockDim = 158*64/(2*2*warpSize); //need to know number of particles ahead of time
+	//const unsigned int blockDim = 158*64/(2*2*warpSize); //need to know number of particles ahead of time (use if numParticles divisible by 32)
+	const unsigned int blockDim = 1000/100;
 
 	// Make sure the number of particles is multiple of twice the warp size (2*32)
 	// for efficiency and reduction
@@ -189,29 +237,29 @@ void runSim(double *r_h, double *v_h, double *m_h, double dt, int numParticles, 
     // Run complete simulation for desired number of time steps
     for (i = 0; i < numSteps; i++) {
     	// One time step
-    	for (j = 0; j < n; j++) {
+    	/*for (j = 0; j < n; j++) {
         	A1_kernel<<<N/warpSize, warpSize>>>(r_d, v_d, dt/(4*n));
         	A2_kernel<<<numParticles/warpSize, warpSize>>>(r_d, v_d, m_d, dt/(2*n), v0arr_d, numParticles);
         	for (k = 0; k < 3; k++) {
-        		reduce<warpSize><<<numParticles/(2*warpSize), warpSize, 2*warpSize*sizeof(double)>>>(v0arr_d+k*numParticles, vout_d, numParticles);
-				reduce<blockDim><<<1, blockDim, 2*blockDim*sizeof(double)>>>(vout_d, &v_d[k], 2*blockDim);
+				reduce<warpSize/2><<<numParticles/(warpSize), warpSize/2, warpSize*sizeof(double)>>>(v0arr_d+k*numParticles, vout_d, numParticles);
+				reduce<2*blockDim><<<1, 2*blockDim, 4*blockDim*sizeof(double)>>>(vout_d, &v_d[k], 4*blockDim);
 			}
 			A1_kernel<<<N/warpSize, warpSize>>>(r_d, v_d, dt/(4*n));
-    	}
+    	}*/
     	B_kernel<<<numParticles/warpSize, warpSize>>>(r_d, v_d, m_d, dt, numParticles);
-    	for (j = 0; j < n; j++) {
+    	/*for (j = 0; j < n; j++) {
         	A1_kernel<<<N/warpSize, warpSize>>>(r_d, v_d, dt/(4*n));
         	A2_kernel<<<numParticles/warpSize, warpSize>>>(r_d, v_d, m_d, dt/(2*n), v0arr_d, numParticles);
         	for (k = 0; k < 3; k++) {
-            	reduce<warpSize><<<numParticles/(2*warpSize), warpSize, 2*warpSize*sizeof(double)>>>(v0arr_d+k*numParticles, vout_d, numParticles);
-            	reduce<blockDim><<<1, blockDim, 2*blockDim*sizeof(double)>>>(vout_d, &v_d[k], 2*blockDim);
-        	}
+                reduce<warpSize/2><<<numParticles/(warpSize), warpSize/2, warpSize*sizeof(double)>>>(v0arr_d+k*numParticles, vout_d, numParticles);
+                reduce<2*blockDim><<<1, 2*blockDim, 4*blockDim*sizeof(double)>>>(vout_d, &v_d[k], 4*blockDim);
+			}
 			A1_kernel<<<N/warpSize, warpSize>>>(r_d, v_d, dt/(4*n));
-    	}
+    	}*/
 	}
 
     // Copy arrays from device to host
-    /*cudaMemcpy(r_h, r_d, N_bytes, cudaMemcpyDeviceToHost);
+    cudaMemcpy(r_h, r_d, N_bytes, cudaMemcpyDeviceToHost);
     cudaMemcpy(v_h, v_d, N_bytes, cudaMemcpyDeviceToHost);
 
 	printf("After %d time step(s):\n", numSteps);
@@ -238,7 +286,7 @@ void runSim(double *r_h, double *v_h, double *m_h, double dt, int numParticles, 
      	printf("%.16lf %.16lf %.16lf\n", v_h[i], v_h[i+1], v_h[i+2]);
     }
 
-	printf("%d\n", numParticles);*/
+	printf("%d\n", numParticles);
 
 	// Free allocated memory on host and device
     cudaFree(r_d);

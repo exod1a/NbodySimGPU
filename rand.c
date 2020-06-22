@@ -9,7 +9,7 @@ double r2()
 
 int main()
 {
-	int N = 98*64; //10112
+	int N = 96*64; //10112
 
 	for (int i = 1; i < N+1; i++)
 	{
