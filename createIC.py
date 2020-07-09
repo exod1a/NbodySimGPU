@@ -23,7 +23,7 @@ import random
 # Redefine units such that mass of Jupiter (M) = 1 and G = 1
 G     = 6.673e-11					# gravitational constant
 M0    = 1.898e27					# set mass scale
-R0    = 8.25e9						# set length scale
+R0    = 8.8605e9					# set length scale
 T0    = np.sqrt(R0**3/(G * M0))		# set time scale
 
 # Simulation parameters
@@ -41,6 +41,7 @@ inc = np.random.normal(0, 1e-3, 1023)
 
 # generate random semi-major axes within disc
 a = np.zeros(1023)
+
 # set eccentricities
 e = np.random.normal(5e-2, 2e-2, 1023)    #ask Hanno
 for i in np.arange(len(a)):
@@ -48,14 +49,12 @@ for i in np.arange(len(a)):
 		e[i] = -e[i]
 	a[i] = random.randint(r_in, r_out)/R0
 
-#e = np.random.normal(1e-3, 1e-2, 1023)  #says to do this but he wants average e to be 0.05
-
 for i in np.arange(len(a)):
 	# initialize at pericenter where y = 0, Vx = 0
 	r[i][0] = a[i] * (1 - e[i])
 
 	# use energy equation to solve for Vy
-	v[i][1] = np.sqrt(m[i] * (2./r[i][0] - 1./a[i]))
+	v[i][1] = np.sqrt(2 * (m[i] + M) * (1 / r[i][0] - 1./(2 * a[i])))
 
 	# use for random rotation around z-axis
 	theta   = np.radians(random.randint(0, 360))
@@ -74,21 +73,23 @@ for i in np.arange(len(a)):
 
 # fix the first particle in the array (embryo) so
 # it is at the proper starting position (not random)
-a[0]    = 0.25*rH/R0
-r[0][0] = a[0] * (1 - e[0])
+"""a[0]    = 0.25*rH/((1-e[0])*R0)
+r[0][0] = 0.25*rH/R0
 r[0][1], r[0][2] = 0, 0
-theta   = np.radians(180)
-c, s    = np.cos(theta), np.sin(theta)
-rotateZ = np.array(((c, -s, 0), (s, c, 0), (0, 0, 1)))
-c2, s2    = np.cos(np.radians(inc[0])), np.sin(np.radians(inc[0]))
-rotateX = np.array(((1, 0, 0), (0, c2, -s2), (0, s2, c2)))
-r[0]    = np.matmul(rotateZ, r[0])
-v[0]	= np.matmul(rotateZ, v[0])
-r[0]   	= np.matmul(rotateX, r[0])
-v[0]	= np.matmul(rotateX, v[0])
+v[0][1] = np.sqrt(2 * (m[0] + M) * (1 / r[0][0] - 1./(2 * a[0])))
+v[0][0], v[0][2] = 0, 0"""
 
+# use for test case purposes
+a[0] = (0.03*rH/R0-0.01)/(1-e[0])
+r[0][0] = a[0]*(1+e[0])
+r[0][1], r[0][2] = 0, 0
+v[0][1] = np.sqrt(2 * (m[0] + M) * (1 / r[0][0] - 1./(2 * a[0])))
+v[0][0], v[0][2] = 0, 0
+
+# print results to screen to dump into "particles.txt" file
 print(" ")
 print(M, "0 0 0 0 0 0")
 for i in np.arange(len(a)):
 	print(m[i], r[i][0], r[i][1], r[i][2], v[i][0], v[i][1], v[i][2])
 
+print(e[0])

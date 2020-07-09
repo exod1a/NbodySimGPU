@@ -9,6 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import timeit
 
+drift = ctypes.CDLL('./A1.so')
+kickA = ctypes.CDLL('./A2.so')
+kickB = ctypes.CDLL('./B.so')
 nrg   = ctypes.CDLL('./energy.so')
 nrg.energy.restype = ctypes.c_double  							# so that it returns a double
 nrg.energynew.restype = ctypes.c_double
@@ -69,8 +72,7 @@ def runError(r, v, m, numParticles, n):
 			#runTime[i] = stop[i] - start[i]
     
 			rel_err[i] = max(rel_err_iter)
-		
-		print(k)
+
 		plt.figure(2)
 		plt.loglog(timeStep_iter,rel_err, label='{}'.format(k))
 		plt.xlabel('Time Step')
@@ -80,3 +82,4 @@ def runError(r, v, m, numParticles, n):
 	plt.show()
 
 	return runTime, rel_err
+

@@ -27,6 +27,8 @@ def runPlot(r, v, m, numSteps, numParticles, dt, n):
 	Ry = np.zeros(numSteps*numParticles)
 	Rz = np.zeros(numSteps*numParticles)
 
+	eps = 0.06;
+
 	for i in np.arange(numSteps):
 		for j in np.arange(numParticles):
 			# x,y and z components of each planet
@@ -37,13 +39,19 @@ def runPlot(r, v, m, numSteps, numParticles, dt, n):
 
 		sim.runSim(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
            							m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt), ctypes.c_uint(numParticles),  \
-           							ctypes.c_uint(n), ctypes.c_uint(numSteps))		
+           							ctypes.c_uint(n), ctypes.c_double(eps))		
 
 	fig = plt.figure(1)
 	ax = fig.add_subplot(111, projection='3d')
 	for i in np.arange(numParticles):
-		ax.plot(Rx[i::numParticles],Ry[i::numParticles],Rz[i::numParticles])
+		if i == 0:
+			ax.plot(Rx[i::numParticles],Ry[i::numParticles],Rz[i::numParticles], c='magenta')
+		elif i == 1:
+			ax.plot(Rx[i::numParticles],Ry[i::numParticles],Rz[i::numParticles], c='cyan')
+		else:
+			ax.plot(Rx[i::numParticles],Ry[i::numParticles],Rz[i::numParticles], c='black')
 	plt.title("Real Space N Body Problem: HR")
+	ax.set_zlim(-0.001, 0.001)
 	ax.set_xlabel('x')
 	ax.set_ylabel('y')
 	ax.set_zlabel('z')
