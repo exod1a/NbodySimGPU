@@ -19,15 +19,13 @@ sim   = ctypes.CDLL('./runSim.so')
 ### @param  numParticles  The number of particles ie. the size of the m array.
 ### @param      dt        The time step over which you wish to update the positions.
 ### @param      n         Integer > 0... Lower the timestep and how many times you call A1 and A2.
-def runPlot(r, v, m, numSteps, numParticles, dt, n):
+def runPlot(r, v, m, numSteps, numParticles, dt, n, rSatellites, rH, status, eps):
 	# Store the updated values
 	# Format: Rx = [x01,x11,...,xN1,x02,x12,...,xN2,...]
 	# First digit is the particle, second is the time step
 	Rx = np.zeros(numSteps*numParticles)
 	Ry = np.zeros(numSteps*numParticles)
 	Rz = np.zeros(numSteps*numParticles)
-
-	eps = 0.06;
 
 	for i in np.arange(numSteps):
 		for j in np.arange(numParticles):

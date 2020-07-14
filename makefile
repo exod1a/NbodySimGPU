@@ -8,13 +8,10 @@ CXX = gcc
 CXXCUDA = nvcc
 FLAGS = -O3 -Xcompiler -fPIC -shared
 
-all: runSim.so energy.so test.so
+all: runSim.so energy.so
 
 runSim.so: runSim.cu
 	${CXXCUDA} ${FLAGS} -o runSim.so runSim.cu
-
-test.so: test.cu
-	${CXXCUDA} ${FLAGS} -o test.so test.cu
 
 energy.so: energy.c energy.h
 	${CXX} -O3 -fPIC -shared -o energy.so energy.c
