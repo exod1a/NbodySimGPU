@@ -22,11 +22,11 @@ M0    		  = 1.898e27                    	# set mass scale
 R0    		  = 8.8605e9                    	# set length scale
 T0    	 	  = np.sqrt(R0**3/(G * M0))     	# set time scale
 rH            = 5.37e10/R0                      # Hill radius (scaled)
-flag 		  = "-p"								# decide what part of program to execute... -p = plot, -e = error			
+flag 		  = "-"								# decide what part of program to execute... -p = plot, -e = error			
 dt 			  = 86400/T0						# default time step (arbitrary)
 n 			  = 1								# Lowers the time step for each call to A1 and A2. Also more calls
-numSteps 	  = 300     							# default number of time steps to take (arbitrary)
-fileName 	  = "particle2.txt"  			 	# file to read initial conditions from
+numSteps 	  = 10    						# default number of time steps to take (arbitrary)
+fileName 	  = "particles.txt"  			 	# file to read initial conditions from
 File 		  = open(fileName, "r")
 lines 		  = File.readlines()
 numParticles  = len(lines) - 1 			       	# number of particles in simulation
@@ -55,7 +55,7 @@ elif flag == "-e":
 	runTime, rel_err = runError(r, v, m, numParticles, n)
 	
 sim   = ctypes.CDLL('./runSim.so')
-"""sim.runSim(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 			   \
+sim.runSim(r.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), v.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 			   \
            m.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), ctypes.c_double(dt), ctypes.c_int(numParticles),  			   \
 		   ctypes.c_int(n), ctypes.c_double(eps), ctypes.c_int(numSteps), ecc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), \
-		   status.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), rSatellites.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))"""
+		   status.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), rSatellites.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))

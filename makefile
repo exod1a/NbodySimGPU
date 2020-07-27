@@ -11,7 +11,7 @@ FLAGS = -O3 -Xcompiler -fPIC -shared
 all: runSim.so energy.so
 
 runSim.so: runSim.cu
-	${CXXCUDA} ${FLAGS} -o runSim.so runSim.cu
+	${CXXCUDA} ${FLAGS} -lineinfo -o runSim.so runSim.cu
 
 energy.so: energy.c energy.h
 	${CXX} -O3 -fPIC -shared -o energy.so energy.c

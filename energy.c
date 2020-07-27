@@ -51,9 +51,6 @@ double energynew(double* r, double* v, double* m, int numParticles, double eps)
         		dirvec[k] = r[k] - r[3*i+k];
 			
 			invdist = m[i] / sqrt(pow(dirvec[0], 2) + pow(dirvec[1], 2) + pow(dirvec[2], 2));
-			//if (isnan(invdist))
-			//	U -= 0;	
-			//else
 			U -= m[0] * invdist;
 		}		
 		if (i > 1)
@@ -62,9 +59,6 @@ double energynew(double* r, double* v, double* m, int numParticles, double eps)
             	dirvec[k] = r[3+k] - r[3*i+k];
 
 			invdist = m[i] / sqrt(pow(dirvec[0], 2) + pow(dirvec[1], 2) + pow(dirvec[2], 2) + eps);
-    	    //if (isnan(invdist))
-    	    //	U -= 0;
-    	    //else
             U -= m[1] * invdist;
 		}	
 	}
